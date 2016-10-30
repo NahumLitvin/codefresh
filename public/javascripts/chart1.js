@@ -4,7 +4,7 @@
 
 
 
-function draw_pie_chart(dataToAppend) {
+function draw_pie_chart(dataToAppend, isText) {
     var width = 960,
         height = 500,
         radius = Math.min(width, height) / 2;
@@ -41,6 +41,7 @@ function draw_pie_chart(dataToAppend) {
             return color(d.data.key);
         });
 
+    if (isText) {
     g.append("text")
         .attr("transform", function (d) {
             return "translate(" + labelArc.centroid(d) + ")";
@@ -49,6 +50,7 @@ function draw_pie_chart(dataToAppend) {
         .text(function (d) {
             return d.data.key + "(" + (d.data.value) + ")"
         });
+    }
     return svg;
 }
 
@@ -59,8 +61,22 @@ d3.text("/data/airbnb.txt",function (text) {
 
     var unique_users_per_device =
         d3.nest()
-            .key(function(d) { return d.dim_device_app_combo.split(" ")[0]; })//by device
+            .key(function (d) {
+                return d.dim_device_app_combo.split("-")[0];
+            })//by device
             .rollup(function(d){return d3.map(d, function(d) { return d.id_visitor; }).size();})//count uniques and rollup
+            .entries(data);
+
+    var unique_users_per_Browser =
+        d3.nest()
+            .key(function (d) {
+                return d.dim_device_app_combo.split("-")[1];
+            })//by Browser
+            .rollup(function (d) {
+                return d3.map(d, function (d) {
+                    return d.id_visitor;
+                }).size();
+            })//count uniques and rollup
             .entries(data);
 
     var unique_users_by_agent =
@@ -70,14 +86,8 @@ d3.text("/data/airbnb.txt",function (text) {
             .sortKeys(d3.ascending)
             .entries(data);
 
-
-    console.log(unique_users_by_agent)
-
-
-
-
-
-    var svg = draw_pie_chart(unique_users_per_device);
-    var svg = draw_pie_chart(unique_users_by_agent);
+    var svg = draw_pie_chart(unique_users_per_device, true);
+    var svg = draw_pie_chart(unique_users_per_Browser, true);
+    var svg = draw_pie_chart(unique_users_by_agent, false);
 });
 
